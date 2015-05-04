@@ -15,13 +15,11 @@
 * >= 4GB RAM suggested, topology generation can impact system if low RAM
 
 ## Project Homepage
-[SCI-WMS](http://asascience-open.github.io/sci-wms/)
+[SCI-WMS](https://github.com/sci-wms/sci-wms/tree/comt)
 
 ##Documentation/Installation
 
 [SCI-WMS 0.1.0 documentation](http://asascience-open.github.io/sci-wms/docs/index.html)
-
-COPYRIGHT 2010 RPS ASA
 
     SCI-WMS is free software: you can redistribute it and/or modify
     it under the terms of the GNU General Public License as published by

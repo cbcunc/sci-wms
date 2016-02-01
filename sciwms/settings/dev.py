@@ -1,31 +1,18 @@
-'''
-COPYRIGHT 2010 RPS ASA
-
-This file is part of SCI-WMS.
-
-    SCI-WMS is free software: you can redistribute it and/or modify
-    it under the terms of the GNU General Public License as published by
-    the Free Software Foundation, either version 3 of the License, or
-    (at your option) any later version.
-
-    SCI-WMS is distributed in the hope that it will be useful,
-    but WITHOUT ANY WARRANTY; without even the implied warranty of
-    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-    GNU General Public License for more details.
-
-    You should have received a copy of the GNU General Public License
-    along with SCI-WMS.  If not, see <http://www.gnu.org/licenses/>.
-'''
-
+#!python
+# coding=utf-8
 from .defaults import *
 
 DEBUG          = True
-TEMPLATE_DEBUG = True
 TESTING        = False
 
-LOGFILE = os.path.join(PROJECT_ROOT, "..", "logs", "sci-wms.log")
+LOGFILE = os.path.join(BASE_DIR, "logs", "sci-wms.log")
 if not os.path.exists(os.path.dirname(LOGFILE)):
     os.makedirs(os.path.dirname(LOGFILE))
+
+# Celery
+BROKER_URL = 'redis://localhost:6060/0'
+CELERY_RESULT_BACKEND = 'redis://localhost:6060/1'
+BROKER_TRANSPORT_OPTIONS = {'fanout_patterns': True}
 
 LOGGING = {
     'version': 1,
@@ -53,14 +40,6 @@ LOGGING = {
             'class': 'logging.StreamHandler',
             'formatter': 'verbose'
         },
-        'file': {
-            'level': 'DEBUG',
-            'class': 'logging.handlers.RotatingFileHandler',
-            'backupCount': 5,
-            'maxBytes': 1024*1024*20,  # 20MB
-            'filename': LOGFILE,
-            'formatter': 'verbose'
-        },
         'mail_admins': {
             'level': 'DEBUG',
             'filters': ['require_debug_false'],
@@ -70,22 +49,24 @@ LOGGING = {
     },
     'loggers': {
         'django': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': 'WARNING',
             'propagate': True,
         },
-        'django.request': {
-            'handlers': ['mail_admins'],
-            'level': 'WARNING',
+        'celery': {
+            'handlers': ['console'],
+            'level': 'INFO',
+        },
+        'celery.task': {
             'propagate': True,
         },
         'sci-wms': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': True,
         },
         'wms': {
-            'handlers': ['file', 'console'],
+            'handlers': ['console'],
             'level': 'DEBUG',
             'propagate': True,
         },

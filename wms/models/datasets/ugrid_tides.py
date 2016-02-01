@@ -110,9 +110,6 @@ class UGridTideDataset(UGridDataset):
         # Now do the RTree index
         self.make_rtree()
 
-        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
-        self.save()
-
     def minmax(self, layer, request):
         _, time_value = self.nearest_time(layer, request.GET['time'])
         wgs84_bbox = request.GET['wgs84_bbox']

@@ -1,8 +1,22 @@
+#!python
+# coding=utf-8
 from .defaults import *
 
 DEBUG          = True
-TEMPLATE_DEBUG = True
 TESTING        = True
+
+# Celery
+CELERYBEAT_SCHEDULE = {}
+CELERY_ALWAYS_EAGER = True
+CELERY_EAGER_PROPAGATES_EXCEPTIONS = True
+CELERY_IGNORE_RESULT = True
+BROKER_BACKEND = 'memory'
+
+CACHES = {
+    'default': {
+        'BACKEND': 'django.core.cache.backends.dummy.DummyCache',
+    }
+}
 
 LOGGING = {
     'version': 1,
@@ -43,9 +57,11 @@ LOGGING = {
             'level': 'WARNING',
             'propagate': True,
         },
-        'django.request': {
+        'celery': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'INFO',
+        },
+        'celery.task': {
             'propagate': True,
         },
         'sci-wms': {

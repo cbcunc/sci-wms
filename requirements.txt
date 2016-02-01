@@ -18,3 +18,8 @@ pandas
 django-autoslug==1.9.3
 isodate
 utide
+
+celery==3.1.20
+hiredis
+django-redis-cache==1.6.0
+django-celery==3.1.17

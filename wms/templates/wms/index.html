@@ -91,7 +91,7 @@
                         <span class="row">
                             <span>Keep up to date:</span>
                             {% if dataset.keep_up_to_date %}
-                                <span style="color: green" class="glyphicon glyphicon-ok"></span>
+                                <span style="color: green" class="glyphicon glyphicon-ok"></span> <span> every {{ dataset.update_every }} seconds</span>
                             {% else %}
                                 <span style="color: red" class="glyphicon glyphicon-remove"></span>
                             {% endif %}
@@ -99,13 +99,13 @@
                     </td>
 
                     <td>
+                        {% if user.is_authenticated %}
                         <!-- Update -->
-                        <a href="{% url 'update_dataset' dataset.slug %}">
-                            <button type="button" class="btn btn-default btn-xs">
+                        <a href="{% url 'update_dataset' dataset.slug %}" data-slug="{{ dataset.slug }}">
+                            <button type="button" class="updateButton btn btn-default btn-xs">
                                 <span class="glyphicon glyphicon-refresh"></span> Update
                             </button>
                         </a>
-                        {% if user.is_authenticated %}
                         <!-- Delete -->
                         <a href="{% url 'dataset-detail' dataset.pk %}">
                             <button type="button" class="deleteButton btn btn-default btn-xs">
@@ -113,6 +113,7 @@
                             </button>
                         </a>
                         {% endif %}
+                        <div id="messages_{{ dataset.slug }}"></div>
                     </td>
                 </tr>
                 {% endfor %}
@@ -175,6 +176,23 @@
                                 $("#dataset-messages").hide().html('<div class="alert alert-danger">' + data.responseText + '</div>').fadeIn();
                             });
     });
+
+    $(".updateButton").click(function(event) {
+        event.preventDefault();
+
+        a_tag = $(this).parent();
+
+        var posting = $.ajax({
+                                type: "GET",
+                                url: a_tag.attr("href"),
+                                success: function(data) {
+                                    $("#messages_" + a_tag.data('slug')).hide().html('<div class="alert alert-success">' + data.message + '</div>').fadeIn();
+                                }
+                            }).fail(function(data) {
+                                $("#messages_" + a_tag.data('slug')).hide().html('<div class="alert alert-danger">Failed. Check logs!</div>').fadeIn();
+                            });
+    });
+
     {% endif %}
     </script>
 

@@ -135,11 +135,8 @@ class UGridDataset(Dataset, NetCDFDataset):
                     time_var_obj.units = time_var.units
                     time_var_obj.standard_name = 'time'
 
-            # Now do the RTree index
-            self.make_rtree()
-
-        self.cache_last_updated = datetime.utcnow().replace(tzinfo=pytz.utc)
-        self.save()
+        # Now do the RTree index
+        self.make_rtree()
 
     def minmax(self, layer, request):
         time_index, time_value = self.nearest_time(layer, request.GET['time'])

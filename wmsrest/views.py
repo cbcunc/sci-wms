@@ -2,10 +2,9 @@
 from rest_framework.views import APIView
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 from wms.models import Dataset, Layer, VirtualLayer, Variable
-from wmsrest.serializers import DatasetSerializer, SGridDatasetSerializer, UGridDatasetSerializer, RGridDatasetSerializer, LayerSerializer, VirtualLayerSerializer, VariableSerializer
+from wmsrest.serializers import DatasetSerializer, SGridDatasetSerializer, UGridDatasetSerializer, RGridDatasetSerializer, UGridTideDatasetSerializer, LayerSerializer, VirtualLayerSerializer, VariableSerializer
 from rest_framework.response import Response
 from rest_framework import status
-from rest_framework import mixins
 from rest_framework import generics
 from django.http import Http404
 
@@ -14,6 +13,7 @@ class DatasetList(APIView):
     """
     List all datasets, or create a new dataset.
     """
+
     def get(self, request, format=None):
         snippets = Dataset.objects.select_related().all()
         serializer = DatasetSerializer(snippets, many=True)
@@ -38,7 +38,7 @@ class DatasetList(APIView):
 
 class DatasetDetail(APIView):
     """
-    Get or update a specific Sci-WMS dataset.
+    Get or update a specific sci-wms dataset.
     Supports GET, PUT, DELETE, and PATCH methods.
 
     A DELETE on a dataset with a defined m2m relationship
@@ -65,7 +65,10 @@ class DatasetDetail(APIView):
 
     def put(self, request, pk, format=None):
         dataset = self.get_object(pk)
-        if 'ugrid' in request.data['type']:
+        if 'ugridtide' in request.data['type']:
+            request.data['type'] = 'wms.ugridtidedataset'
+            serializer = UGridTideDatasetSerializer(dataset, data=request.data)
+        elif 'ugrid' in request.data['type']:
             request.data['type'] = 'wms.ugriddataset'
             serializer = UGridDatasetSerializer(dataset, data=request.data)
         elif 'sgrid' in request.data['type']:
@@ -108,6 +111,7 @@ class DefaultList(APIView):
     """
     List all datasets, or create a new dataset.
     """
+
     def get(self, request, format=None):
         snippets = Variable.objects.all()
         serializer = VariableSerializer(snippets, many=True)

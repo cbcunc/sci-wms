@@ -18,6 +18,7 @@ from django.contrib.auth.decorators import login_required
 
 from wms.models import Dataset, Server, Variable, Style
 from wms.utils import get_layer_from_request
+from wms.tasks import update_dataset as update_dataset_task
 from wms import wms_handler
 from wms import logger
 
@@ -77,20 +78,6 @@ def authenticate_view(request):
 
 def logout_view(request):
     logout(request)
-
-
-def update_dataset(request, dataset):
-    if authenticate_view(request):
-        if dataset is None:
-            return HttpResponse(json.dumps({ "message" : "Please include 'dataset' parameter in GET request." }), content_type='application/json')
-        else:
-            d = Dataset.objects.get(slug=dataset)
-            d.update_cache(force=True)
-            return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
-    else:
-        return HttpResponse(json.dumps({ "message" : "Authentication failed, please login to the admin console first or pass login credentials to the GET request ('username' and 'password')" }), content_type='application/json')
-
-    logout_view(request)
 
 
 def normalize_get_params(request):
@@ -240,6 +227,15 @@ class DatasetShowView(View):
         styles = { x.code: x.code for x in Style.objects.order_by('image_type') }
         styles = json.dumps(OrderedDict(sorted(styles.items(), key=lambda x: x[0])))
         return TemplateResponse(request, 'wms/dataset.html', dict(dataset=dataset, styles=styles))
+
+
+class DatasetUpdateView(View):
+
+    @method_decorator(login_required)
+    def get(self, request, dataset):
+        dataset = get_object_or_404(Dataset, slug=dataset)
+        update_dataset_task.delay(dataset.pk, force=True)
+        return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
 
 
 class DatasetListView(View):

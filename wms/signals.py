@@ -3,7 +3,7 @@ from django.conf import settings
 from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete, pre_save
 
-from wms.tasks import update_cache, process_layers, update_dataset
+from wms.tasks import process_layers, update_dataset
 from wms.models import Dataset, UGridDataset, SGridDataset, RGridDataset, UGridTideDataset
 from sciwms.utils import add_periodic_task, remove_periodic_task
 

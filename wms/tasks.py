@@ -6,6 +6,7 @@ from datetime import datetime
 import pytz
 
 from celery import shared_task
+from django.db.utils import IntegrityError
 
 from wms.models.datasets.base import Dataset
 
@@ -13,21 +14,21 @@ from sciwms.utils import single_job_instance, bound_pk_lock, pk_lock, add_period
 
 
 @shared_task(bind=True, default_retry_delay=300)
-@bound_pk_lock(timeout=300)
+@bound_pk_lock(timeout=1200)
 def process_layers(self, pkey, **kwargs):
     try:
         d = Dataset.objects.get(pk=pkey)
         if hasattr(d, 'process_layers'):
             d.process_layers()
-        return "Processed {} ({!s})'".format(d.name, d.pk)
+        return 'Processed {} ({!s})'.format(d.name, d.pk)
     except Dataset.DoesNotExist:
-        return "Dataset did not exist, can't complete task"
+        return 'Dataset did not exist, can not complete task'
     except BaseException as e:
         self.retry(exc=e)
 
 
 @shared_task(bind=True, default_retry_delay=300)
-@bound_pk_lock(timeout=7200)
+@bound_pk_lock(timeout=1200)
 def update_cache(self, pkey, **kwargs):
     try:
         d = Dataset.objects.get(pk=pkey)
@@ -36,9 +37,9 @@ def update_cache(self, pkey, **kwargs):
 
         # Save without callbacks
         Dataset.objects.filter(pk=pkey).update(cache_last_updated=datetime.utcnow().replace(tzinfo=pytz.utc))
-        return "Updated {} ({!s})'".format(d.name, d.pk)
+        return 'Updated {} ({!s})'.format(d.name, d.pk)
     except Dataset.DoesNotExist:
-        return "Dataset did not exist, can't complete task"
+        return 'Dataset did not exist, can not complete task'
     except BaseException as e:
         self.retry(exc=e)
 

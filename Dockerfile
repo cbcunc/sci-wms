@@ -7,7 +7,6 @@ ENV DEBIAN_FRONTEND noninteractive
 ENV LANG C.UTF-8
 
 RUN apt-get update && apt-get install -y \
-RUN apt-get update && apt-get install -y \
     binutils \
     build-essential \
     bzip2 \
@@ -38,9 +37,9 @@ ENV PATH /opt/conda/bin:$PATH
 
 # Install requirements
 COPY requirements*.txt /tmp/
-RUN conda install --channel ioos --file /tmp/requirements.txt
-RUN conda install --channel ioos --file /tmp/requirements-prod.txt
-RUN conda install --channel rustychris libspatialindex
+RUN conda install -c ioos -c axiom-data-science --file /tmp/requirements.txt
+RUN conda install -c ioos -c axiom-data-science --file /tmp/requirements-prod.txt
+RUN conda install -c rustychris libspatialindex
 
 #RUN mkdir -p /etc/cron.d/
 #COPY docker/crontab/* /etc/cron.d/
@@ -79,11 +78,11 @@ ENV WEB_PORT 7002
 ENV FLOWER_PORT 5555
 EXPOSE $WEB_PORT $FLOWER_PORT
 
-ENV SCIWMS_ROOT /events
+WORKDIR /sciwms
+ENV SCIWMS_ROOT /sciwms
 RUN mkdir -p "$SCIWMS_ROOT"
 COPY . $SCIWMS_ROOT
-RUN rm -f /srv/sci-wms/sciwms/db/sci-wms.db
-WORKDIR $SCIWMS_ROOT
+RUN rm -f $SCIWMS_ROOT/sciwms/db/sci-wms.db
 
 ENV DJANGO_SETTINGS_MODULE sciwms.settings.prod
 VOLUME ["/data"]

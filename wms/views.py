@@ -8,7 +8,6 @@ from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.template.response import TemplateResponse
 from django.core import serializers
-from django.db.utils import IntegrityError
 from django.shortcuts import get_object_or_404, render_to_response
 from django.views.decorators.cache import cache_page
 from django.views.generic import View
@@ -19,6 +18,7 @@ from django.contrib.auth.decorators import login_required
 from wms.models import Dataset, Server, Variable, Style
 from wms.utils import get_layer_from_request
 from wms.tasks import update_dataset as update_dataset_task
+from wms.tasks import add_dataset
 from wms import wms_handler
 from wms import logger
 
@@ -249,16 +249,11 @@ class DatasetListView(View):
         except (AssertionError, KeyError):
             return HttpResponse('URI and Name are required. Please try again.', status=500, reason="Could not process inputs", content_type="text/plain")
 
-        klass = Dataset.identify(uri)
-        if klass is not None:
-            try:
-                ds = klass.objects.create(uri=uri, name=name)
-            except IntegrityError:
-                return HttpResponse('Name is already taken, please choose another', status=500, reason="Could not process inputs", content_type="application/json")
-
-            return HttpResponse(serializers.serialize('json', [ds]), status=201, content_type="application/json")
+        if Dataset.objects.filter(name=name).count() > 0:
+            return HttpResponse('Name is already taken, please choose another', status=500, reason="Could not process inputs", content_type="application/json")
         else:
-            return HttpResponse('Could not process the URI with any of the available Dataset types. Please check the URI and try again', status=500, reason="Could not process inputs", content_type="application/json")
+            add_dataset.delay(name, uri)
+            return HttpResponse(json.dumps({'name': name, 'uri': uri}), status=201, reason="Could not process inputs", content_type="application/json")
 
 
 class WmsView(View):

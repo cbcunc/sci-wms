@@ -47,6 +47,21 @@ def update_cache(self, pkey, **kwargs):
 @single_job_instance(timeout=7200)
 def update_dataset(pkey, **kwargs):
     (process_layers.si(pkey, **kwargs) | update_cache.si(pkey, **kwargs)).delay()
+    return 'Scheduled dataset update'
+
+
+@shared_task
+@pk_lock(timeout=1200)
+def add_dataset(name, uri):
+    klass = Dataset.identify(uri)
+    if klass is not None:
+        try:
+            ds = klass.objects.create(name=name, uri=uri)
+            return 'Added {}'.format(ds.name)
+        except IntegrityError:
+            return 'Could not add dataset, name "{}" already exists'.format(name)
+    else:
+        return 'No dataset types found to process {}'.format(uri)
 
 
 @shared_task

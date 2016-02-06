@@ -36,8 +36,8 @@ from wms import logger
 
 class SGridDataset(Dataset, NetCDFDataset):
 
-    @staticmethod
-    def is_valid(uri):
+    @classmethod
+    def is_valid(cls, uri):
         try:
             with EnhancedDataset(uri) as ds:
                 nc_ds = SGrid(ds)

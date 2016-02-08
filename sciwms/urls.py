@@ -25,20 +25,17 @@ from django.conf import settings
 from django.contrib import admin
 admin.autodiscover()
 
-urlpatterns = patterns( '',
-                        url(r'^grappelli/', include('grappelli.urls')),
-                        url(r'^admin/', include(admin.site.urls), name='admin'),
-
-                        url(r'^$', 'wms.views.index', name='index'),
-
-                        url(r'^crossdomain\.xml$', 'wms.views.crossdomain'),
-                        url(r'^favicon.ico$', 'wms.views.favicon'),
-
-                        url(r'^wms/', include('wms.urls')),
-                        url(r'^rest/', include('wmsrest.urls')),
-
-                        url(r'^logout/$', 'django.contrib.auth.views.logout', {'next_page': '/'}, name='logout')
-                    )
+urlpatterns = patterns(
+    '',
+    url(r'^grappelli/', include('grappelli.urls')),
+    url(r'^admin/', include(admin.site.urls), name='admin'),
+    url(r'^$', 'wms.views.index', name='index'),
+    url(r'^crossdomain\.xml$', 'wms.views.crossdomain'),
+    url(r'^favicon.ico$', 'wms.views.favicon'),
+    url(r'^wms/', include('wms.urls')),
+    url(r'^rest/', include('wmsrest.urls')),
+    url(r'^logout/$', 'django.contrib.auth.views.logout', {'next_page': '/'}, name='logout')
+)
 
 # So we don't have to run "collectstatic" in development mode
 if settings.DEBUG:

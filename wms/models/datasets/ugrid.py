@@ -40,7 +40,7 @@ class UGridDataset(Dataset, NetCDFDataset):
             try:
                 with EnhancedMFDataset(uri, aggdim='time') as ds:
                     return 'ugrid' in ds.Conventions.lower()
-            except (AttributeError, RuntimeError, ValueError):
+            except (IndexError, AttributeError, RuntimeError, ValueError):
                 return False
         except AttributeError:
             return False

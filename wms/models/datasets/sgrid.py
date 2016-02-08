@@ -45,7 +45,7 @@ class SGridDataset(Dataset, NetCDFDataset):
                 with EnhancedMFDataset(uri, aggdim='time') as ds:
                     nc_ds = SGrid(ds)
                     return nc_ds.sgrid_compliant_file() or 'sgrid' in ds.Conventions.lower()
-            except (AttributeError, RuntimeError, ValueError, SGridNonCompliantError):
+            except (IndexError, AttributeError, RuntimeError, ValueError, SGridNonCompliantError):
                 return False
         except (AttributeError, SGridNonCompliantError):
             return False

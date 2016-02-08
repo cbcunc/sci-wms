@@ -7,7 +7,6 @@ from django.template import RequestContext
 from django.http import HttpResponse
 from django.contrib.auth import authenticate, login, logout
 from django.template.response import TemplateResponse
-from django.core import serializers
 from django.shortcuts import get_object_or_404, render_to_response
 from django.views.decorators.cache import cache_page
 from django.views.generic import View

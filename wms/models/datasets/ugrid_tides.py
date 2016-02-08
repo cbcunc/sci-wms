@@ -12,11 +12,10 @@ import numpy as np
 from wms.models import Style
 
 from wms.models import UGridDataset, VirtualLayer
-from wms.utils import calc_lon_lat_padding, calc_safety_factor, timeit, DotDict
+from wms.utils import calc_lon_lat_padding, calc_safety_factor, DotDict
 
 from wms import data_handler
 from wms import mpl_handler
-from wms import gfi_handler
 from wms import gmd_handler
 
 from wms import logger

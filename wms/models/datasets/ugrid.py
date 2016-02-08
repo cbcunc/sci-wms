@@ -6,9 +6,6 @@ import shutil
 import tempfile
 import itertools
 from math import sqrt
-from datetime import datetime
-
-import pytz
 
 from pyugrid import UGrid
 from pyaxiom.netcdf import EnhancedDataset, EnhancedMFDataset

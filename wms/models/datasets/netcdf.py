@@ -111,7 +111,11 @@ class NetCDFDataset(object):
                 tree = rtree.index.Index(self.node_tree_root)
             else:
                 raise NotImplementedError("No RTree for location '{}'".format(location))
-            nindex = list(tree.nearest((longitude, latitude, longitude, latitude), 1, objects=True))[0]
+
+            try:
+                nindex = list(tree.nearest((longitude, latitude, longitude, latitude), 1, objects=True))[0]
+            except IndexError:
+                raise ValueError("No cells in the {} tree for point {}, {}".format(location, longitude, latitude))
             closest_x, closest_y = tuple(nindex.bbox[2:])
             geo_index = nindex.object
         except BaseException:

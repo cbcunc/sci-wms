@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 from django.test import TestCase
 from wms.tests import add_server, add_group, add_user, add_dataset
-from wms.models import Dataset, VirtualLayer, Variable
+from wms.models import Dataset, Variable
 
 from wms import logger
 

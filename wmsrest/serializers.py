@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 from rest_framework import serializers
-from wms.models import VirtualLayer, Dataset, Layer, SGridDataset, UGridDataset, RGridDataset, UGridTideDataset, Variable, Style
+from rest_framework.validators import UniqueValidator
+from wms.models import VirtualLayer, Dataset, Layer, SGridDataset, UGridDataset, RGridDataset, UGridTideDataset, Variable, Style, UnidentifiedDataset
 from wms.utils import split
 
 
@@ -69,6 +70,24 @@ class VirtualLayerSerializer(serializers.ModelSerializer):
                   'logscale',
                   'default_style',
                   'default_numcontours')
+
+
+class UnidentifiedDatasetSerializer(serializers.ModelSerializer):
+
+    name = serializers.CharField(
+        validators=[
+            UniqueValidator(queryset=UnidentifiedDataset.objects.all()),
+            UniqueValidator(queryset=Dataset.objects.all())
+        ]
+    )
+
+    class Meta:
+        model = UnidentifiedDataset
+        fields = ('id',
+                  'uri',
+                  'name',
+                  'job_id',
+                  'messages')
 
 
 class DatasetSerializer(serializers.ModelSerializer):

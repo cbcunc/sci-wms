@@ -151,12 +151,12 @@ class TestSgrid(TestCase):
         params = copy(self.url_params)
         params.update(styles='vectors_cubehelix', layers='u,v')
         self.do_test(params)
-        
+
     def test_sgrid_vectorscale(self):
         params = copy(self.url_params)
         params.update(vectorscale=25, styles='vectors_cubehelix', layers='u,v')
         self.do_test(params)
-        
+
     def test_sgrid_vectorstep(self):
         params = copy(self.url_params)
         params.update(vectorstep=5, styles='vectors_cubehelix', layers='u,v')

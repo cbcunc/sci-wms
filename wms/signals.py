@@ -1,25 +1,22 @@
 # -*- coding: utf-8 -*-
-from django.conf import settings
 from django.dispatch import receiver
 from django.db.models.signals import post_save, post_delete, pre_save
 
-from wms.tasks import process_layers, update_dataset
-from wms.models import Dataset, UGridDataset, SGridDataset, RGridDataset, UGridTideDataset
+from celery import uuid
+from wms.tasks import update_dataset, add_unidentified_dataset
+from wms.models import Dataset, UGridDataset, SGridDataset, RGridDataset, UGridTideDataset, UnidentifiedDataset
 from sciwms.utils import add_periodic_task, remove_periodic_task
 
 
 def schedule_dataset_update(sender, instance, created, **kwargs):
-    if settings.TESTING is not True:
-        if not instance.has_cache():
-            update_dataset.delay(instance.pk)
-        else:
-            process_layers.delay(instance.pk)
+    if created is True or not instance.has_cache():
+        update_dataset.delay(instance.pk)
 
-        if created is True:
-            add_periodic_task(name="Dataset Update: {0} ({1})".format(instance.name, instance.pk),
-                              interval=instance.update_every,
-                              args=[instance.pk],
-                              task='wms.tasks.update_dataset')
+    if created is True and instance.keep_up_to_date is True:
+        add_periodic_task(name="Dataset Update: {0} ({1})".format(instance.name, instance.pk),
+                          interval=instance.update_every,
+                          args=[instance.pk],
+                          task='wms.tasks.update_dataset')
 
 
 def update_every_changed(sender, instance, **kwargs):
@@ -28,12 +25,46 @@ def update_every_changed(sender, instance, **kwargs):
     except Dataset.DoesNotExist:
         pass
     else:
-        if obj.update_every != instance.update_every:
+        # Keep up to date made True
+        if obj.keep_up_to_date is False and instance.keep_up_to_date is True:
+            add_periodic_task(name="Dataset Update: {0} ({1})".format(instance.name, instance.pk),
+                              interval=instance.update_every,
+                              args=[instance.pk],
+                              task='wms.tasks.update_dataset')
+
+        # Keep up to date made False
+        elif obj.keep_up_to_date is True and instance.keep_up_to_date is False:
+            remove_periodic_task(args=[instance.pk], task='wms.tasks.update_dataset')
+
+        # update_every changed
+        elif obj.update_every != instance.update_every and instance.keep_up_to_date is True:
             remove_periodic_task(args=[instance.pk], task='wms.tasks.update_dataset')
             add_periodic_task(name="Dataset Update: {0} ({1})".format(instance.name, instance.pk),
                               interval=instance.update_every,
                               args=[instance.pk],
                               task='wms.tasks.update_dataset')
+
+
+@receiver(post_save, sender=UnidentifiedDataset)
+def identify_unidentified_dataset(sender, instance, created, **kwargs):
+    if created is True:
+        task_id = uuid()
+        instance.job_id = task_id
+        instance.save()
+        add_unidentified_dataset.apply_async(args=(instance.pk,), task_id=task_id)
+
+
+@receiver(pre_save, sender=UnidentifiedDataset)
+def unid_name_or_uri_changed(sender, instance, **kwargs):
+    try:
+        obj = UnidentifiedDataset.objects.get(pk=instance.pk)
+    except UnidentifiedDataset.DoesNotExist:
+        pass
+    else:
+        if obj.name != instance.name:
+            add_unidentified_dataset.delay(instance.pk)
+        elif obj.uri != instance.uri:
+            add_unidentified_dataset.delay(instance.pk)
 
 
 @receiver(post_save, sender=UGridTideDataset)

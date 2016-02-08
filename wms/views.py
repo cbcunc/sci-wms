@@ -14,10 +14,9 @@ from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_protect
 from django.contrib.auth.decorators import login_required
 
-from wms.models import Dataset, Server, Variable, Style
+from wms.models import Dataset, Server, Variable, Style, UnidentifiedDataset
 from wms.utils import get_layer_from_request
 from wms.tasks import update_dataset as update_dataset_task
-from wms.tasks import add_dataset
 from wms import wms_handler
 from wms import logger
 
@@ -47,7 +46,8 @@ def datasets(request):
 
 def index(request):
     datasets = Dataset.objects.all()
-    context = { "datasets" : datasets }
+    unidentified_datasets = UnidentifiedDataset.objects.all()
+    context = { "datasets" : datasets, "unidentified_datasets" : unidentified_datasets }
     return TemplateResponse(request, 'wms/index.html', context)
 
 
@@ -235,24 +235,6 @@ class DatasetUpdateView(View):
         dataset = get_object_or_404(Dataset, slug=dataset)
         update_dataset_task.delay(dataset.pk, force=True)
         return HttpResponse(json.dumps({ "message" : "Scheduled" }), content_type='application/json')
-
-
-class DatasetListView(View):
-
-    @method_decorator(csrf_protect)
-    def post(self, request):
-        try:
-            uri = request.POST['uri']
-            name = request.POST['name']
-            assert uri and name
-        except (AssertionError, KeyError):
-            return HttpResponse('URI and Name are required. Please try again.', status=500, reason="Could not process inputs", content_type="text/plain")
-
-        if Dataset.objects.filter(name=name).count() > 0:
-            return HttpResponse('Name is already taken, please choose another', status=500, reason="Could not process inputs", content_type="application/json")
-        else:
-            add_dataset.delay(name, uri)
-            return HttpResponse(json.dumps({'name': name, 'uri': uri}), status=201, reason="Could not process inputs", content_type="application/json")
 
 
 class WmsView(View):

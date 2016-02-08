@@ -5,10 +5,10 @@ from collections import namedtuple
 from datetime import datetime
 import pytz
 
-from celery import shared_task
+from celery import shared_task, group
 from django.db.utils import IntegrityError
 
-from wms.models.datasets.base import Dataset
+from wms.models import Dataset, UnidentifiedDataset
 
 from sciwms.utils import single_job_instance, bound_pk_lock, pk_lock, add_periodic_task, get_periodic_task, remove_periodic_task
 
@@ -44,25 +44,40 @@ def update_cache(self, pkey, **kwargs):
         self.retry(exc=e)
 
 
-@shared_task
-@single_job_instance(timeout=7200)
-def update_dataset(pkey, **kwargs):
-    (process_layers.si(pkey, **kwargs) | update_cache.si(pkey, **kwargs)).delay()
-    return 'Scheduled dataset update'
+@shared_task(bind=True)
+@bound_pk_lock(timeout=3000)
+def update_dataset(self, pkey, **kwargs):
+    try:
+        Dataset.objects.filter(pk=pkey).update(update_task=self.request.id)
+        g = group(process_layers.si(pkey, **kwargs), update_cache.si(pkey, **kwargs))()
+        return g.results
+    finally:
+        Dataset.objects.filter(pk=pkey).update(update_task='')
 
 
 @shared_task
 @pk_lock(timeout=1200)
-def add_dataset(name, uri):
-    klass = Dataset.identify(uri)
-    if klass is not None:
-        try:
-            ds = klass.objects.create(name=name, uri=uri)
-            return 'Added {}'.format(ds.name)
-        except IntegrityError:
-            return 'Could not add dataset, name "{}" already exists'.format(name)
-    else:
-        return 'No dataset types found to process {}'.format(uri)
+def add_unidentified_dataset(pkey):
+    try:
+        ud = UnidentifiedDataset.objects.get(pk=pkey)
+        klass = Dataset.identify(ud.uri)
+        if klass is not None:
+            try:
+                ds = klass.objects.create(name=ud.name, uri=ud.uri)
+                ud.delete()
+                return 'Added {}'.format(ds.name)
+            except IntegrityError:
+                msg = 'Could not add dataset, name "{}" already exists'.format(ud.name)
+                ud.messages = msg
+                ud.save()
+                return msg
+        else:
+            msg = 'No dataset types found to process {}'.format(ud.uri)
+            ud.messages = msg
+            ud.save()
+            return msg
+    except UnidentifiedDataset.DoesNotExist:
+        return 'UnidentifiedDataset did not exist, can not complete task'
 
 
 @shared_task

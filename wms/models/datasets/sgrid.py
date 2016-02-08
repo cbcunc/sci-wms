@@ -85,11 +85,16 @@ class SGridDataset(Dataset, NetCDFDataset):
 
     def update_cache(self, force=False):
         with self.dataset() as nc:
+            if nc is None:
+                logger.error("Failed update_cache, could not load dataset "
+                             "as a netCDF4 object")
+                return
+
             sg = from_nc_dataset(nc)
             sg.save_as_netcdf(self.topology_file)
 
             if not os.path.exists(self.topology_file):
-                logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset))
+                logger.error("Failed to create topology_file cache for Dataset '{}'".format(self.dataset.name))
                 return
 
             # add time to the cached topology

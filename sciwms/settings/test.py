@@ -77,6 +77,11 @@ LOGGING = {
     }
 }
 
+# Where to store the Topology data?
+TOPOLOGY_PATH = os.path.join(BASE_DIR, "wms", "tests", "topology")
+if not os.path.exists(TOPOLOGY_PATH):
+    os.makedirs(TOPOLOGY_PATH)
+
 LOCAL_APPS = ()
 try:
     from local_settings import *

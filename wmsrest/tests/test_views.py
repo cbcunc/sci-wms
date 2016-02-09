@@ -184,6 +184,9 @@ class TestAddUnidentifiedDataset(APITestCase):
     @classmethod
     def setUpClass(cls):
         super(TestAddUnidentifiedDataset, cls).setUpClass()
+        Dataset.objects.all().delete()  # Revore UGridTest and SGridTest defaults
+
+    def tearDown(cls):
         UnidentifiedDataset.objects.all().delete()
         Dataset.objects.all().delete()
 
@@ -221,7 +224,7 @@ class TestAddUnidentifiedDataset(APITestCase):
         assert UnidentifiedDataset.objects.count() == 0
         assert UGridDataset.objects.count() == 1
 
-        params = dict(name='test_ugrid', uri=os.path.join(resource_path, 'coawst_sgrid.nc'))
+        params = dict(name='test_ugrid', uri=os.path.join(resource_path, 'selfe_ugrid.nc'))
         response = self.ac.post(reverse('unid-list'), params)
         assert response.status_code == 400
         assert UnidentifiedDataset.objects.count() == 0
